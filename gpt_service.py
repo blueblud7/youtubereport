@@ -1,9 +1,24 @@
 from openai import OpenAI
 from config import OPENAI_API_KEY
+import re
 
 class GPTService:
     def __init__(self):
         self.client = OpenAI(api_key=OPENAI_API_KEY)
+
+    def _extract_youtube_id(self, url: str) -> str:
+        """YouTube URL에서 동영상 ID를 추출합니다."""
+        patterns = [
+            r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)',
+            r'youtube\.com\/embed\/([^&\n?#]+)',
+            r'youtube\.com\/v\/([^&\n?#]+)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        return None
 
     def get_prompt_by_type(self, prompt_type: str, language: str = 'ko', word_count: int = 500, custom_prompt: str = None) -> str:
         """프롬프트 타입에 따른 시스템 프롬프트를 반환합니다."""
@@ -84,27 +99,66 @@ class GPTService:
             return ""
     
     def _format_references(self, references: list, language: str = 'ko') -> str:
-        """참고문헌을 포맷합니다."""
+        """참고문헌을 YouTube embedded 형태로 포맷합니다."""
         if not references:
             return ""
         
         # 언어에 따른 제목 설정
         if language == 'ko':
-            ref_title = "\n\n참고문헌"
+            ref_title = "\n\n## 📺 참고 동영상"
         elif language == 'en':
-            ref_title = "\n\nReferences"
+            ref_title = "\n\n## 📺 Reference Videos"
         elif language == 'ja':
-            ref_title = "\n\n参考文献"
+            ref_title = "\n\n## 📺 参考動画"
         elif language == 'zh':
-            ref_title = "\n\n参考文献"
+            ref_title = "\n\n## 📺 参考视频"
         else:
-            ref_title = "\n\n참고문헌"
+            ref_title = "\n\n## 📺 참고 동영상"
         
-        ref_content = ref_title + "\n"
+        ref_content = ref_title + "\n\n"
         
-        # 단순한 번호 목록으로 비디오 나열
+        # YouTube embedded 형태로 동영상 표시
         for i, video in enumerate(references, 1):
             url = video.get('url', '')
-            ref_content += f"{i}. {url}\n"
+            title = video.get('title', f'Video {i}')
+            video_id = self._extract_youtube_id(url)
+            
+            if video_id:
+                # YouTube 썸네일 이미지와 함께 embedded iframe 생성
+                ref_content += f"""
+<div class="youtube-video-container mb-4" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #f8f9fa;">
+    <div class="video-header p-3 bg-light">
+        <h5 class="mb-1"><strong>{i}. {title}</strong></h5>
+        <small class="text-muted">
+            <i class="fab fa-youtube text-danger me-1"></i>
+            <a href="{url}" target="_blank" class="text-decoration-none">{url}</a>
+        </small>
+    </div>
+    <div class="video-embed">
+        <iframe 
+            width="100%" 
+            height="315" 
+            src="https://www.youtube.com/embed/{video_id}" 
+            title="{title}"
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowfullscreen
+            style="display: block;">
+        </iframe>
+    </div>
+</div>
+
+"""
+            else:
+                # YouTube ID를 추출할 수 없는 경우 기본 링크 형태로 표시
+                ref_content += f"""
+<div class="video-link-container mb-3 p-3" style="border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+    <h6><strong>{i}. {title}</strong></h6>
+    <a href="{url}" target="_blank" class="text-decoration-none">
+        <i class="fab fa-youtube text-danger me-1"></i>{url}
+    </a>
+</div>
+
+"""
         
         return ref_content 

@@ -199,6 +199,62 @@
     border-radius: 8px;
 }
 
+/* YouTube Embedded Videos 스타일 */
+.youtube-video-container {
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.youtube-video-container .video-embed {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 비율 */
+    height: 0;
+    overflow: hidden;
+}
+
+.youtube-video-container .video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.video-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.video-header h5 {
+    color: #212529;
+    font-weight: 600;
+}
+
+.video-link-container {
+    transition: all 0.2s ease;
+}
+
+.video-link-container:hover {
+    background-color: #e9ecef !important;
+    border-color: #007bff !important;
+}
+
+.video-link-container h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .youtube-video-container .video-embed {
+        padding-bottom: 60%; /* 모바일에서 약간 더 높은 비율 */
+    }
+    
+    .video-header h5 {
+        font-size: 1rem;
+    }
+}
+
 /* 인쇄용 스타일 */
 @media print {
     .card-footer,

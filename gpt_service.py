@@ -124,28 +124,13 @@ class GPTService:
             video_id = self._extract_youtube_id(url)
             
             if video_id:
-                # YouTube 썸네일 이미지와 함께 embedded iframe 생성
+                # YouTube 제목과 링크만 표시
                 ref_content += f"""
-<div class="youtube-video-container mb-4" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #f8f9fa;">
-    <div class="video-header p-3 bg-light">
-        <h5 class="mb-1"><strong>{i}. {title}</strong></h5>
-        <small class="text-muted">
-            <i class="fab fa-youtube text-danger me-1"></i>
-            <a href="{url}" target="_blank" class="text-decoration-none">{url}</a>
-        </small>
-    </div>
-    <div class="video-embed">
-        <iframe 
-            width="100%" 
-            height="315" 
-            src="https://www.youtube.com/embed/{video_id}" 
-            title="{title}"
-            frameborder="0" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            allowfullscreen
-            style="display: block;">
-        </iframe>
-    </div>
+<div class="video-link-container mb-3 p-3" style="border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+    <h6><strong>{i}. {title}</strong></h6>
+    <a href="{url}" target="_blank" class="text-decoration-none">
+        <i class="fab fa-youtube text-danger me-1"></i>{url}
+    </a>
 </div>
 
 """

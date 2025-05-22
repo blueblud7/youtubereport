@@ -98,15 +98,21 @@ class YouTubeService:
             print(f"채널 ID 추출 중 오류: {str(e)}")
             return None
 
-    def search_videos(self, query: str, max_results: int = 50) -> List[Dict]:
+    def search_videos(self, query: str, max_results: int = 50, channel_id: str = None) -> List[Dict]:
         """키워드로 비디오를 검색합니다."""
         try:
-            search_response = self.youtube.search().list(
-                q=query,
-                part="id,snippet",
-                maxResults=max_results,
-                type="video"
-            ).execute()
+            search_params = {
+                "q": query,
+                "part": "id,snippet",
+                "maxResults": max_results,
+                "type": "video"
+            }
+            
+            # 특정 채널 내에서만 검색하는 경우
+            if channel_id:
+                search_params["channelId"] = channel_id
+            
+            search_response = self.youtube.search().list(**search_params).execute()
 
             videos = []
             for item in search_response.get("items", []):
@@ -124,7 +130,7 @@ class YouTubeService:
         except HttpError as e:
             if e.resp.status == 403:  # Quota exceeded
                 self._switch_api_key()
-                return self.search_videos(query, max_results)
+                return self.search_videos(query, max_results, channel_id)
             raise e
 
     def get_channel_info(self, channel_id: str) -> Dict:
@@ -249,9 +255,9 @@ class YouTubeService:
             print(f"자막 가져오기 실패: {str(e)}")
             return None
 
-    def get_videos(self, input_str: str, is_keyword: bool = False, max_results: int = 50) -> List[Dict]:
+    def get_videos(self, input_str: str, is_keyword: bool = False, max_results: int = 50, target_channel_id: str = None) -> List[Dict]:
         """채널 또는 키워드로 비디오를 가져옵니다."""
         if is_keyword:
-            return self.search_videos(input_str, max_results)
+            return self.search_videos(input_str, max_results, target_channel_id)
         else:
             return self.get_channel_videos(input_str, max_results) 

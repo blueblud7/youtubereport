@@ -60,6 +60,8 @@ def all_reports():
 def add_channel():
     name = request.form.get('name')
     type = request.form.get('type')
+    video_count = int(request.form.get('video_count', 5))
+    target_channel = request.form.get('target_channel', '')
     
     if not name or not type:
         flash('채널 이름과 타입을 모두 입력해주세요.')
@@ -73,10 +75,22 @@ def add_channel():
             flash('유효하지 않은 채널입니다.')
             return redirect(url_for('index'))
     
-    channel = Channel(name=name, channel_id=channel_id, channel_type=type)
+    # 키워드의 경우 target_channel_id 설정
+    target_channel_id = None
+    if type == 'keyword' and target_channel:
+        target_channel_id = target_channel
+    
+    channel = Channel(
+        name=name, 
+        channel_id=channel_id, 
+        channel_type=type,
+        video_count=video_count,
+        target_channel_id=target_channel_id
+    )
     db.session.add(channel)
     db.session.commit()
     
+    flash(f'"{name}"이(가) 성공적으로 추가되었습니다! (분석 비디오 수: {video_count}개)')
     return redirect(url_for('index'))
 
 @app.route('/generate_report/<int:channel_id>')
@@ -111,7 +125,11 @@ def generate_report_with_prompt(channel_id):
         custom_prompt = None
     
     # 비디오 가져오기
-    videos = youtube_service.get_videos(channel.name, is_keyword=(channel.channel_type == 'keyword'))
+    videos = youtube_service.get_videos(
+        channel.name, 
+        is_keyword=(channel.channel_type == 'keyword'),
+        target_channel_id=channel.target_channel_id
+    )
     
     if not videos:
         flash('비디오를 찾을 수 없습니다.')
@@ -121,7 +139,7 @@ def generate_report_with_prompt(channel_id):
     analyses = []
     analyzed_videos = []  # 실제로 분석된 비디오들의 정보 저장
     
-    for video in videos[:5]:  # 최근 5개 비디오만 분석
+    for video in videos[:channel.video_count]:  # 설정된 개수만큼 분석
         captions = youtube_service.get_video_captions(video['video_id'])
         if captions:
             analysis = get_gpt_service().analyze_content(

@@ -8,6 +8,8 @@ class Channel(db.Model):
     name = db.Column(db.String(100), nullable=False)
     channel_id = db.Column(db.String(100), nullable=True)
     channel_type = db.Column(db.String(20), nullable=False)  # 'channel' or 'keyword'
+    video_count = db.Column(db.Integer, nullable=False, default=5)  # 분석할 비디오 개수
+    target_channel_id = db.Column(db.String(100), nullable=True)  # 키워드 검색 제한할 채널 ID
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reports = db.relationship('Report', backref='channel', lazy=True, cascade='all, delete-orphan')
 

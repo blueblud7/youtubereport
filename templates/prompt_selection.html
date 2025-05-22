@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 헤더 섹션 -->
+    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #ff7b7b 0%, #667eea 100%);">
+        <div class="card-body text-white p-4">
+            <h2 class="mb-0">
+                <i class="fas fa-magic me-3"></i>리포트 스타일 선택
+            </h2>
+            <p class="mb-0 mt-2">{{ channel.name }}의 리포트 생성 방식을 선택해주세요</p>
+        </div>
+    </div>
+
+    <form action="{{ url_for('generate_report_with_prompt', channel_id=channel.id) }}" method="POST">
+        <!-- 프롬프트 타입 선택 -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card h-100 prompt-card" onclick="selectPrompt('simple', this)">
+                    <div class="card-body text-center p-4">
+                        <div class="prompt-icon mb-3">
+                            <i class="fas fa-compress-alt" style="font-size: 2.5rem; color: #28a745;"></i>
+                        </div>
+                        <h5 class="card-title">간결하게</h5>
+                        <p class="card-text text-muted">핵심 내용만 간략하게 요약하여 빠르게 파악할 수 있습니다.</p>
+                        <input type="radio" name="prompt_type" value="simple" class="prompt-radio" style="display: none;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card h-100 prompt-card" onclick="selectPrompt('professional', this)">
+                    <div class="card-body text-center p-4">
+                        <div class="prompt-icon mb-3">
+                            <i class="fas fa-chart-line" style="font-size: 2.5rem; color: #007bff;"></i>
+                        </div>
+                        <h5 class="card-title">전문 리포트</h5>
+                        <p class="card-text text-muted">상세한 분석과 인사이트를 포함한 전문적인 리포트입니다.</p>
+                        <input type="radio" name="prompt_type" value="professional" class="prompt-radio" style="display: none;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card h-100 prompt-card" onclick="selectPrompt('bullet', this)">
+                    <div class="card-body text-center p-4">
+                        <div class="prompt-icon mb-3">
+                            <i class="fas fa-list-ul" style="font-size: 2.5rem; color: #ffc107;"></i>
+                        </div>
+                        <h5 class="card-title">불릿 포인트</h5>
+                        <p class="card-text text-muted">체계적으로 정리된 불릿 포인트 형식의 리포트입니다.</p>
+                        <input type="radio" name="prompt_type" value="bullet" class="prompt-radio" style="display: none;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card h-100 prompt-card" onclick="selectPrompt('custom', this)">
+                    <div class="card-body text-center p-4">
+                        <div class="prompt-icon mb-3">
+                            <i class="fas fa-cogs" style="font-size: 2.5rem; color: #6f42c1;"></i>
+                        </div>
+                        <h5 class="card-title">커스텀</h5>
+                        <p class="card-text text-muted">원하는 방식으로 직접 설정하여 맞춤형 리포트를 생성합니다.</p>
+                        <input type="radio" name="prompt_type" value="custom" class="prompt-radio" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 커스텀 옵션 (커스텀 선택 시에만 표시) -->
+        <div id="customOptions" class="card border-0 shadow-sm mb-4" style="display: none;">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-sliders-h me-2"></i>커스텀 설정
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">글자 수</label>
+                        <select class="form-select" name="word_count">
+                            <option value="300">간략 (300자)</option>
+                            <option value="500" selected>보통 (500자)</option>
+                            <option value="800">상세 (800자)</option>
+                            <option value="1200">매우 상세 (1200자)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">언어</label>
+                        <select class="form-select" name="language">
+                            <option value="ko" selected>한국어</option>
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="zh">中文</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">기본 스타일</label>
+                        <select class="form-select" name="base_style">
+                            <option value="simple">간결형</option>
+                            <option value="professional" selected>전문가형</option>
+                            <option value="bullet">불릿형</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">커스텀 프롬프트</label>
+                    <textarea class="form-control" name="custom_prompt" rows="4" 
+                              placeholder="원하는 리포트 형식이나 포함하고 싶은 내용을 자세히 설명해주세요. 예: '경제 전문가 관점에서 투자 시사점을 포함하여 분석해주세요.'"></textarea>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        구체적으로 작성할수록 더 정확한 리포트를 받을 수 있습니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 공통 옵션 -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>기본 설정
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="basicOptions">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">글자 수</label>
+                        <select class="form-select" name="basic_word_count">
+                            <option value="300">간략 (300자)</option>
+                            <option value="500" selected>보통 (500자)</option>
+                            <option value="800">상세 (800자)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">언어</label>
+                        <select class="form-select" name="basic_language">
+                            <option value="ko" selected>한국어</option>
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="zh">中文</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="d-flex gap-3 mb-4">
+            <button type="submit" class="btn btn-success btn-lg" id="generateBtn" disabled>
+                <i class="fas fa-magic me-2"></i>리포트 생성하기
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>돌아가기
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+.prompt-card {
+    border: 2px solid #e9ecef;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.prompt-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.prompt-card.selected {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.2);
+}
+
+.prompt-card.selected .prompt-icon i {
+    color: #007bff !important;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+</style>
+
+<script>
+function selectPrompt(type, element) {
+    // 모든 카드에서 selected 클래스 제거
+    document.querySelectorAll('.prompt-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // 선택된 카드에 selected 클래스 추가
+    element.classList.add('selected');
+    
+    // 라디오 버튼 체크
+    element.querySelector('.prompt-radio').checked = true;
+    
+    // 커스텀 옵션 표시/숨김
+    const customOptions = document.getElementById('customOptions');
+    const basicOptions = document.getElementById('basicOptions');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    if (type === 'custom') {
+        customOptions.style.display = 'block';
+        basicOptions.parentElement.style.display = 'none';
+    } else {
+        customOptions.style.display = 'none';
+        basicOptions.parentElement.style.display = 'block';
+    }
+    
+    // 생성 버튼 활성화
+    generateBtn.disabled = false;
+}
+
+// 페이지 로드 시 첫 번째 옵션 선택
+document.addEventListener('DOMContentLoaded', function() {
+    const firstCard = document.querySelector('.prompt-card');
+    if (firstCard) {
+        selectPrompt('simple', firstCard);
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube 리포트 생성기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- 사이드바 -->
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold text-emerald-600">YouTube 리포트</h1>
+            </div>
+            <nav class="mt-4">
+                <a href="/" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600">
+                    채널/키워드
+                </a>
+                <a href="/reports" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600">
+                    리포트
+                </a>
+            </nav>
+        </div>
+
+        <!-- 메인 컨텐츠 -->
+        <div class="flex-1 overflow-auto">
+            <main class="p-8">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+</html> 

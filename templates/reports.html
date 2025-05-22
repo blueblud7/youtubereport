@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-gray-800">{{ channel.name }} 리포트</h2>
+            <a href="{{ url_for('generate_report', channel_id=channel.id) }}"
+               class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                새 리포트 생성
+            </a>
+        </div>
+
+        <div class="space-y-6">
+            {% for report in reports %}
+            <div class="border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <span class="text-sm text-gray-500">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span class="ml-2 px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">
+                            {{ report.report_type }}
+                        </span>
+                    </div>
+                </div>
+                <div class="prose max-w-none">
+                    {{ report.content | safe }}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">생성된 리포트가 없습니다.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

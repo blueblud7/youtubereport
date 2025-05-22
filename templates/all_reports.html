@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 헤더 섹션 -->
+    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+        <div class="card-body text-white p-4">
+            <h2 class="mb-0">
+                <i class="fas fa-chart-line me-3"></i>리포트 대시보드
+            </h2>
+            <p class="mb-0 mt-2">등록된 채널과 키워드의 리포트를 관리하세요</p>
+        </div>
+    </div>
+    
+    {% if channels %}
+        <div class="row">
+            {% for channel in channels %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm report-card">
+                        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0 text-truncate">{{ channel.name }}</h5>
+                            {% if channel.channel_type == 'channel' %}
+                                <span class="badge bg-danger">
+                                    <i class="fab fa-youtube me-1"></i>채널
+                                </span>
+                            {% else %}
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-search me-1"></i>키워드
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            {% if channel.reports %}
+                                <h6 class="text-success mb-3">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    최근 리포트 ({{ channel.reports|length }}개)
+                                </h6>
+                                <div class="reports-list">
+                                    {% set sorted_reports = channel.reports|sort(attribute='created_at', reverse=true) %}
+                                    {% for report in sorted_reports[0:3] %}
+                                        <div class="report-item mb-2 p-2 bg-light rounded">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                                </small>
+                                                <a href="{{ url_for('view_report', report_id=report.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if channel.reports|length > 3 %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-ellipsis-h me-1"></i>
+                                            그 외 {{ channel.reports|length - 3 }}개 더
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <i class="fas fa-file-alt text-muted mb-2" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">아직 리포트가 없습니다</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('generate_report', channel_id=channel.id) }}" 
+                                   class="btn btn-success">
+                                    <i class="fas fa-magic me-2"></i>새 리포트 생성
+                                </a>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <a href="{{ url_for('index') }}" 
+                                           class="btn btn-outline-secondary w-100">
+                                            <i class="fas fa-arrow-left me-1"></i>메인으로
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <form method="POST" action="{{ url_for('delete_channel', channel_id=channel.id) }}" 
+                                              onsubmit="return confirm('정말로 &quot;{{ channel.name }}&quot;을(를) 삭제하시겠습니까? 연관된 모든 리포트도 함께 삭제됩니다.')">
+                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                <i class="fas fa-trash me-1"></i>삭제
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-chart-line text-muted" style="font-size: 4rem;"></i>
+            </div>
+            <h4 class="text-muted">등록된 채널이 없습니다</h4>
+            <p class="text-muted mb-4">먼저 채널이나 키워드를 등록해주세요.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>채널/키워드 추가하기
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.report-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.report-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.report-item {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.report-item:hover {
+    background-color: #e9ecef !important;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.badge {
+    border-radius: 6px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+</style>
+{% endblock %} 

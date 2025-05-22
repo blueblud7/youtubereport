@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 메인 컨텐츠 -->
+        <div class="col-12">
+            <!-- 헤더 섹션 -->
+            <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-5">
+                    <h1 class="display-5 fw-bold mb-3">🎥 YouTube 리포트 시스템</h1>
+                    <p class="lead mb-0">유튜브 채널이나 키워드를 추가하고 AI가 생성하는 인사이트 리포트를 받아보세요!</p>
+                </div>
+            </div>
+
+            <!-- 채널/키워드 추가 폼 -->
+            <div class="row mb-5">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white border-0 pb-0">
+                            <h4 class="card-title text-center mb-0">
+                                <i class="fas fa-plus-circle text-primary me-2"></i>새 채널/키워드 추가
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            {% with messages = get_flashed_messages() %}
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+
+                            <form action="{{ url_for('add_channel') }}" method="POST">
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">타입 선택</label>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-check p-3 border rounded bg-light">
+                                                <input class="form-check-input" type="radio" name="type" value="channel" id="channel" checked>
+                                                <label class="form-check-label w-100" for="channel">
+                                                    <i class="fab fa-youtube text-danger me-2"></i>
+                                                    <strong>유튜브 채널</strong>
+                                                    <br><small class="text-muted">특정 채널의 최신 영상들을 분석</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check p-3 border rounded bg-light">
+                                                <input class="form-check-input" type="radio" name="type" value="keyword" id="keyword">
+                                                <label class="form-check-label w-100" for="keyword">
+                                                    <i class="fas fa-search text-primary me-2"></i>
+                                                    <strong>키워드 검색</strong>
+                                                    <br><small class="text-muted">키워드 관련 최신 영상들을 분석</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="name" class="form-label fw-bold">채널 이름 또는 키워드</label>
+                                    <input type="text" class="form-control form-control-lg" id="name" name="name" 
+                                           placeholder="예: @채널명 또는 검색 키워드" required>
+                                    <div class="form-text">
+                                        <i class="fas fa-lightbulb text-warning me-1"></i>
+                                        채널: @채널명, 채널URL, 또는 채널ID | 키워드: 원하는 검색어
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-plus me-2"></i>추가하기
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 등록된 채널/키워드 목록 -->
+            {% if channels %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-list text-success me-2"></i>등록된 채널 & 키워드
+                        <span class="badge bg-primary ms-2">{{ channels|length }}</span>
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        {% for channel in channels %}
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100 border-0 shadow-sm channel-card">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title mb-0 text-truncate">{{ channel.name }}</h5>
+                                        {% if channel.channel_type == 'channel' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fab fa-youtube me-1"></i>채널
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-search me-1"></i>키워드
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {% if channel.reports %}
+                                            <small class="text-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                {{ channel.reports|length }}개의 리포트
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                리포트 없음
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('generate_report', channel_id=channel.id) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-magic me-1"></i>리포트 생성
+                                        </a>
+                                        {% if channel.reports %}
+                                        <a href="{{ url_for('all_reports') }}" 
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>리포트 보기
+                                        </a>
+                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('delete_channel', channel_id=channel.id) }}" 
+                                              onsubmit="return confirm('정말로 &quot;{{ channel.name }}&quot;을(를) 삭제하시겠습니까? 연관된 모든 리포트도 함께 삭제됩니다.')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                                <i class="fas fa-trash me-1"></i>삭제
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-inbox text-muted" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="text-muted">아직 등록된 채널이나 키워드가 없습니다</h4>
+                <p class="text-muted">위의 폼을 사용해서 첫 번째 채널이나 키워드를 추가해보세요!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.channel-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.channel-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.form-check:hover {
+    background-color: #f8f9fa !important;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.badge {
+    border-radius: 6px;
+}
+</style>
+
+<!-- Bootstrap JS (Alert 기능을 위해) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %} 

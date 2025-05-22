@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 헤더 섹션 -->
+    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
+        <div class="card-body text-white p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-file-alt me-3"></i>{{ report.channel.name }} 리포트
+                    </h2>
+                    <p class="mb-0">
+                        {% if report.channel.channel_type == 'channel' %}
+                            <i class="fab fa-youtube me-2"></i>YouTube 채널 분석 리포트
+                        {% else %}
+                            <i class="fas fa-search me-2"></i>키워드 검색 분석 리포트
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>분석 결과
+                    </h4>
+                    {% if report.channel.channel_type == 'channel' %}
+                        <span class="badge bg-danger">
+                            <i class="fab fa-youtube me-1"></i>채널
+                        </span>
+                    {% else %}
+                        <span class="badge bg-primary">
+                            <i class="fas fa-search me-1"></i>키워드
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="card-body p-4">
+                    {% if report.content %}
+                        <div class="report-content">
+                            {{ report.content|markdown|safe }}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-circle text-warning mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted">리포트 내용이 없습니다</h5>
+                            <p class="text-muted">분석 중 오류가 발생했거나 콘텐츠를 찾을 수 없습니다.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light border-0">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <a href="{{ url_for('all_reports') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-arrow-left me-2"></i>리포트 목록
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-home me-2"></i>메인 페이지
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('generate_report', channel_id=report.channel.id) }}" class="btn btn-success w-100">
+                                <i class="fas fa-magic me-2"></i>새 리포트 생성
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.report-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.report-content p {
+    margin-bottom: 1.5rem;
+}
+
+.report-content h1 {
+    color: #495057;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.report-content h2 {
+    color: #495057;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #6c757d;
+    padding-bottom: 0.3rem;
+    font-size: 1.6rem;
+    font-weight: 500;
+}
+
+.report-content h3 {
+    color: #495057;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.report-content ul, 
+.report-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+}
+
+.report-content li {
+    margin-bottom: 0.5rem;
+}
+
+.report-content blockquote {
+    border-left: 4px solid #007bff;
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+.report-content a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.report-content a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.report-content strong {
+    font-weight: 600;
+    color: #212529;
+}
+
+.report-content em {
+    font-style: italic;
+    color: #6c757d;
+}
+
+.report-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #e83e8c;
+    border: 1px solid #e9ecef;
+}
+
+.report-content pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+.report-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #495057;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.badge {
+    border-radius: 6px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+/* 인쇄용 스타일 */
+@media print {
+    .card-footer,
+    .btn {
+        display: none !important;
+    }
+    
+    .report-content {
+        font-size: 12pt;
+        line-height: 1.6;
+    }
+}
+</style>
+{% endblock %} 

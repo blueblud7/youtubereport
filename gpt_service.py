@@ -99,7 +99,7 @@ class GPTService:
             return ""
     
     def _format_references(self, references: list, language: str = 'ko') -> str:
-        """참고문헌을 YouTube embedded 형태로 포맷합니다."""
+        """참고문헌을 깔끔한 마크다운 형태로 포맷합니다."""
         if not references:
             return ""
         
@@ -117,33 +117,13 @@ class GPTService:
         
         ref_content = ref_title + "\n\n"
         
-        # YouTube embedded 형태로 동영상 표시
+        # 깔끔한 마크다운 형태로 동영상 표시
         for i, video in enumerate(references, 1):
             url = video.get('url', '')
             title = video.get('title', f'Video {i}')
-            video_id = self._extract_youtube_id(url)
             
-            if video_id:
-                # YouTube 제목과 링크만 표시
-                ref_content += f"""
-<div class="video-link-container mb-3 p-3" style="border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-    <h6><strong>{i}. {title}</strong></h6>
-    <a href="{url}" target="_blank" class="text-decoration-none">
-        <i class="fab fa-youtube text-danger me-1"></i>{url}
-    </a>
-</div>
-
-"""
-            else:
-                # YouTube ID를 추출할 수 없는 경우 기본 링크 형태로 표시
-                ref_content += f"""
-<div class="video-link-container mb-3 p-3" style="border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-    <h6><strong>{i}. {title}</strong></h6>
-    <a href="{url}" target="_blank" class="text-decoration-none">
-        <i class="fab fa-youtube text-danger me-1"></i>{url}
-    </a>
-</div>
-
-"""
+            # 제목과 URL을 깔끔하게 표시
+            ref_content += f"**{i}. {title}**\n"
+            ref_content += f"🔗 {url}\n\n"
         
         return ref_content 

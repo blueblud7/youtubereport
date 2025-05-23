@@ -10,6 +10,13 @@ class Channel(db.Model):
     channel_type = db.Column(db.String(20), nullable=False)  # 'channel' or 'keyword'
     video_count = db.Column(db.Integer, nullable=False, default=5)  # 분석할 비디오 개수
     target_channel_id = db.Column(db.String(100), nullable=True)  # 키워드 검색 제한할 채널 ID
+    
+    # 자동 리포트 생성 스케줄링 필드들
+    auto_report_enabled = db.Column(db.Boolean, nullable=False, default=False)  # 자동 리포트 활성화 여부
+    schedule_time = db.Column(db.String(5), nullable=True, default="09:00")  # 실행 시간 (HH:MM 형식)
+    schedule_days = db.Column(db.String(20), nullable=False, default="daily")  # 실행 주기 (daily, weekdays, weekend)
+    auto_prompt_type = db.Column(db.String(20), nullable=False, default='simple')  # 자동 리포트용 프롬프트 타입
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reports = db.relationship('Report', backref='channel', lazy=True, cascade='all, delete-orphan')
 

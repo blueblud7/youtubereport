@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from models import db, Channel, Report
 from youtube_service import YouTubeService
+from scheduler_service import SchedulerService
 from flask_migrate import Migrate
 import os
 from datetime import datetime
@@ -63,6 +64,12 @@ def add_channel():
     video_count = int(request.form.get('video_count', 5))
     target_channel = request.form.get('target_channel', '')
     
+    # 자동 리포트 설정
+    auto_report_enabled = request.form.get('auto_report_enabled') == 'on'
+    schedule_time = request.form.get('schedule_time', '09:00')
+    schedule_days = request.form.get('schedule_days', 'daily')
+    auto_prompt_type = request.form.get('auto_prompt_type', 'simple')
+    
     if not name or not type:
         flash('채널 이름과 타입을 모두 입력해주세요.')
         return redirect(url_for('index'))
@@ -85,12 +92,17 @@ def add_channel():
         channel_id=channel_id, 
         channel_type=type,
         video_count=video_count,
-        target_channel_id=target_channel_id
+        target_channel_id=target_channel_id,
+        auto_report_enabled=auto_report_enabled,
+        schedule_time=schedule_time,
+        schedule_days=schedule_days,
+        auto_prompt_type=auto_prompt_type
     )
     db.session.add(channel)
     db.session.commit()
     
-    flash(f'"{name}"이(가) 성공적으로 추가되었습니다! (분석 비디오 수: {video_count}개)')
+    auto_status = "자동 리포트 활성화" if auto_report_enabled else "수동 리포트만"
+    flash(f'"{name}"이(가) 성공적으로 추가되었습니다! (분석 비디오 수: {video_count}개, {auto_status})')
     return redirect(url_for('index'))
 
 @app.route('/generate_report/<int:channel_id>')
@@ -206,7 +218,87 @@ def delete_channel(channel_id):
     flash(f'"{channel.name}" 이(가) 성공적으로 삭제되었습니다.')
     return redirect(url_for('index'))
 
+@app.route('/update_schedule/<int:channel_id>', methods=['POST'])
+def update_schedule(channel_id):
+    """채널의 자동 리포트 스케줄을 업데이트합니다."""
+    channel = Channel.query.get_or_404(channel_id)
+    
+    # 폼 데이터 가져오기
+    auto_report_enabled = request.form.get('auto_report_enabled') == 'on'
+    schedule_time = request.form.get('schedule_time', '09:00')
+    schedule_days = request.form.get('schedule_days', 'daily')
+    auto_prompt_type = request.form.get('auto_prompt_type', 'simple')
+    
+    # 데이터베이스 업데이트
+    channel.auto_report_enabled = auto_report_enabled
+    channel.schedule_time = schedule_time
+    channel.schedule_days = schedule_days
+    channel.auto_prompt_type = auto_prompt_type
+    
+    db.session.commit()
+    
+    status = "활성화" if auto_report_enabled else "비활성화"
+    flash(f'"{channel.name}"의 자동 리포트 스케줄이 {status}되었습니다!')
+    return redirect(url_for('index'))
+
+@app.route('/schedule_status')
+def schedule_status():
+    """현재 스케줄 상태를 JSON으로 반환합니다."""
+    scheduler_service = SchedulerService(app)
+    
+    try:
+        next_runs = scheduler_service.get_next_scheduled_runs()
+        enabled_channels = Channel.query.filter_by(auto_report_enabled=True).all()
+        
+        return jsonify({
+            'enabled_channels': len(enabled_channels),
+            'next_runs': next_runs,
+            'scheduler_running': scheduler_service.running
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/test_auto_report/<int:channel_id>')
+def test_auto_report(channel_id):
+    """특정 채널의 자동 리포트를 즉시 테스트 실행합니다."""
+    scheduler_service = SchedulerService(app)
+    
+    channel = Channel.query.get_or_404(channel_id)
+    
+    if not channel.auto_report_enabled:
+        flash(f'"{channel.name}"의 자동 리포트가 비활성화되어 있습니다.')
+        return redirect(url_for('index'))
+    
+    try:
+        # 백그라운드에서 리포트 생성 실행
+        import threading
+        thread = threading.Thread(
+            target=scheduler_service._generate_auto_report, 
+            args=(channel_id,), 
+            daemon=True
+        )
+        thread.start()
+        
+        flash(f'"{channel.name}"의 자동 리포트 테스트가 시작되었습니다. 잠시 후 리포트를 확인해주세요.')
+    except Exception as e:
+        flash(f'자동 리포트 테스트 중 오류가 발생했습니다: {e}')
+    
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, port=3000) 
+        
+        # 스케줄러 서비스 초기화 및 시작
+        scheduler_service = SchedulerService(app)
+        scheduler_service.start_scheduler()
+        
+        print("🚀 YouTube 리포트 시스템이 시작되었습니다!")
+        print("📅 자동 리포트 스케줄러가 활성화되었습니다!")
+        
+    try:
+        app.run(debug=True, port=3000)
+    finally:
+        # 애플리케이션 종료 시 스케줄러 정리
+        if scheduler_service:
+            scheduler_service.stop_scheduler() 

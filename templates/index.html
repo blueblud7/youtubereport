@@ -101,6 +101,42 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- 자동 리포트 설정 -->
+                                <div class="mb-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="auto_report_enabled" name="auto_report_enabled">
+                                        <label class="form-check-label fw-bold" for="auto_report_enabled">
+                                            <i class="fas fa-clock text-primary me-2"></i>자동 리포트 생성
+                                        </label>
+                                    </div>
+                                    <div class="form-text mb-3">매일 지정한 시간에 자동으로 리포트를 생성합니다</div>
+                                    
+                                    <div id="auto_schedule_options" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="schedule_time" class="form-label">실행 시간</label>
+                                                <input type="time" class="form-control" id="schedule_time" name="schedule_time" value="09:00">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="schedule_days" class="form-label">실행 주기</label>
+                                                <select class="form-select" id="schedule_days" name="schedule_days">
+                                                    <option value="daily" selected>매일</option>
+                                                    <option value="weekdays">평일만 (월~금)</option>
+                                                    <option value="weekend">주말만 (토~일)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="auto_prompt_type" class="form-label">리포트 스타일</label>
+                                                <select class="form-select" id="auto_prompt_type" name="auto_prompt_type">
+                                                    <option value="simple" selected>간단한 요약</option>
+                                                    <option value="professional">전문적 분석</option>
+                                                    <option value="bullet">포인트 정리</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <div class="d-grid">
                                     <button type="submit" class="btn btn-primary btn-lg">
@@ -163,6 +199,28 @@
                                                 <i class="fas fa-filter me-1"></i>특정 채널 내 검색
                                             </small>
                                         {% endif %}
+                                        
+                                        <!-- 자동 리포트 상태 표시 -->
+                                        <div class="mt-2">
+                                            {% if channel.auto_report_enabled %}
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-success">
+                                                        <i class="fas fa-robot me-1"></i>자동 리포트 활성화
+                                                    </small>
+                                                    <button type="button" class="btn btn-outline-info btn-sm" 
+                                                            onclick="testAutoReport({{ channel.id }})">
+                                                        <i class="fas fa-play me-1"></i>테스트
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted d-block">
+                                                    {{ channel.schedule_days }} {{ channel.schedule_time }}
+                                                </small>
+                                            {% else %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-pause-circle me-1"></i>수동 리포트만
+                                                </small>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     
                                     <div class="d-grid gap-2">
@@ -176,6 +234,13 @@
                                             <i class="fas fa-eye me-1"></i>리포트 보기
                                         </a>
                                         {% endif %}
+                                        
+                                        <!-- 자동 리포트 설정 버튼 -->
+                                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                data-bs-toggle="modal" data-bs-target="#scheduleModal{{ channel.id }}">
+                                            <i class="fas fa-cog me-1"></i>자동 리포트 설정
+                                        </button>
+                                        
                                         <form method="POST" action="{{ url_for('delete_channel', channel_id=channel.id) }}" 
                                               onsubmit="return confirm('정말로 &quot;{{ channel.name }}&quot;을(를) 삭제하시겠습니까? 연관된 모든 리포트도 함께 삭제됩니다.')">
                                             <button type="submit" class="btn btn-outline-danger btn-sm w-100">
@@ -190,6 +255,78 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- 자동 리포트 설정 모달창들 -->
+            {% for channel in channels %}
+            <div class="modal fade" id="scheduleModal{{ channel.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                {{ channel.name }} - 자동 리포트 설정
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('update_schedule', channel_id=channel.id) }}">
+                            <div class="modal-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="auto_report_enabled_{{ channel.id }}" 
+                                           name="auto_report_enabled"
+                                           {% if channel.auto_report_enabled %}checked{% endif %}
+                                           onchange="toggleModalScheduleOptions({{ channel.id }})">
+                                    <label class="form-check-label fw-bold" for="auto_report_enabled_{{ channel.id }}">
+                                        자동 리포트 생성 활성화
+                                    </label>
+                                </div>
+                                
+                                <div id="modal_schedule_options_{{ channel.id }}" {% if not channel.auto_report_enabled %}style="display: none;"{% endif %}>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label for="schedule_time_{{ channel.id }}" class="form-label">실행 시간</label>
+                                            <input type="time" class="form-control" 
+                                                   id="schedule_time_{{ channel.id }}" 
+                                                   name="schedule_time" 
+                                                   value="{{ channel.schedule_time or '09:00' }}">
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="schedule_days_{{ channel.id }}" class="form-label">실행 주기</label>
+                                            <select class="form-select" id="schedule_days_{{ channel.id }}" name="schedule_days">
+                                                <option value="daily" {% if channel.schedule_days == 'daily' %}selected{% endif %}>매일</option>
+                                                <option value="weekdays" {% if channel.schedule_days == 'weekdays' %}selected{% endif %}>평일만 (월~금)</option>
+                                                <option value="weekend" {% if channel.schedule_days == 'weekend' %}selected{% endif %}>주말만 (토~일)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="auto_prompt_type_{{ channel.id }}" class="form-label">리포트 스타일</label>
+                                            <select class="form-select" id="auto_prompt_type_{{ channel.id }}" name="auto_prompt_type">
+                                                <option value="simple" {% if channel.auto_prompt_type == 'simple' %}selected{% endif %}>간단한 요약</option>
+                                                <option value="professional" {% if channel.auto_prompt_type == 'professional' %}selected{% endif %}>전문적 분석</option>
+                                                <option value="bullet" {% if channel.auto_prompt_type == 'bullet' %}selected{% endif %}>포인트 정리</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>참고:</strong> 자동 리포트는 서버가 실행 중일 때만 동작합니다. 
+                                        설정된 시간에 자동으로 {{ channel.video_count }}개의 최신 비디오를 분석하여 리포트를 생성합니다.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>설정 저장
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
             {% else %}
             <div class="text-center py-5">
                 <div class="mb-4">
@@ -240,6 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const keywordRadio = document.getElementById('keyword');
     const keywordOptions = document.getElementById('keyword_options');
     
+    // 자동 리포트 토글
+    const autoReportToggle = document.getElementById('auto_report_enabled');
+    const autoScheduleOptions = document.getElementById('auto_schedule_options');
+    
     function toggleKeywordOptions() {
         if (keywordRadio.checked) {
             keywordOptions.style.display = 'block';
@@ -248,11 +389,62 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function toggleAutoScheduleOptions() {
+        if (autoReportToggle.checked) {
+            autoScheduleOptions.style.display = 'block';
+        } else {
+            autoScheduleOptions.style.display = 'none';
+        }
+    }
+    
     channelRadio.addEventListener('change', toggleKeywordOptions);
     keywordRadio.addEventListener('change', toggleKeywordOptions);
+    autoReportToggle.addEventListener('change', toggleAutoScheduleOptions);
     
     // 초기 상태 설정
     toggleKeywordOptions();
+    toggleAutoScheduleOptions();
 });
+
+// 모달 내 스케줄 옵션 토글
+function toggleModalScheduleOptions(channelId) {
+    const checkbox = document.getElementById('auto_report_enabled_' + channelId);
+    const options = document.getElementById('modal_schedule_options_' + channelId);
+    
+    if (checkbox.checked) {
+        options.style.display = 'block';
+    } else {
+        options.style.display = 'none';
+    }
+}
+
+// 자동 리포트 테스트 실행
+function testAutoReport(channelId) {
+    if (confirm('자동 리포트 테스트를 실행하시겠습니까?')) {
+        // 로딩 상태 표시
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>실행중...';
+        button.disabled = true;
+        
+        // 테스트 실행
+        fetch('/test_auto_report/' + channelId)
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+                throw new Error('테스트 실행 실패');
+            })
+            .then(() => {
+                alert('자동 리포트 테스트가 시작되었습니다. 잠시 후 리포트를 확인해주세요.');
+                location.reload();
+            })
+            .catch(error => {
+                alert('오류가 발생했습니다: ' + error.message);
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+    }
+}
 </script>
 {% endblock %} 

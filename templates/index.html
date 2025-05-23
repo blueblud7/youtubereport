@@ -8,7 +8,7 @@
             <!-- 헤더 섹션 -->
             <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <div class="card-body text-white p-5">
-                    <h1 class="display-5 fw-bold mb-3">🎥 YouTube 리포트 시스템</h1>
+                    <h2 class="fw-bold mb-3">🎥 YouTube 리포트 시스템</h2>
                     <p class="lead mb-0">유튜브 채널이나 키워드를 추가하고 AI가 생성하는 인사이트 리포트를 받아보세요!</p>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                                                         <i class="fas fa-robot me-1"></i>자동 리포트 활성화
                                                     </small>
                                                     <button type="button" class="btn btn-outline-info btn-sm" 
-                                                            onclick="testAutoReport({{ channel.id }})">
+                                                            data-channel-id="{{ channel.id }}" onclick="testAutoReport(this.getAttribute('data-channel-id'))">
                                                         <i class="fas fa-play me-1"></i>테스트
                                                     </button>
                                                 </div>
@@ -275,7 +275,7 @@
                                            id="auto_report_enabled_{{ channel.id }}" 
                                            name="auto_report_enabled"
                                            {% if channel.auto_report_enabled %}checked{% endif %}
-                                           onchange="toggleModalScheduleOptions({{ channel.id }})">
+                                           data-channel-id="{{ channel.id }}" onchange="toggleModalScheduleOptions(this.getAttribute('data-channel-id'))">
                                     <label class="form-check-label fw-bold" for="auto_report_enabled_{{ channel.id }}">
                                         자동 리포트 생성 활성화
                                     </label>

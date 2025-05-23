@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from models import db, Channel, Report
 from youtube_service import YouTubeService
 from scheduler_service import SchedulerService
@@ -8,6 +8,7 @@ from datetime import datetime
 from gpt_service import GPTService
 import re
 import markdown
+from translations import get_text, get_all_texts
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///youtube_reports.db'
@@ -22,6 +23,28 @@ youtube_service = YouTubeService()
 
 def get_gpt_service():
     return GPTService()
+
+# 언어 설정 함수
+def get_current_language():
+    """현재 언어 설정을 반환합니다."""
+    return session.get('language', 'ko')
+
+@app.context_processor
+def inject_language():
+    """모든 템플릿에 언어 관련 변수를 주입합니다."""
+    current_lang = get_current_language()
+    return {
+        'current_lang': current_lang,
+        'texts': get_all_texts(current_lang),
+        '_': lambda key: get_text(key, current_lang)
+    }
+
+@app.route('/set_language/<language>')
+def set_language(language):
+    """언어를 설정합니다."""
+    if language in ['ko', 'en']:
+        session['language'] = language
+    return redirect(request.referrer or url_for('index'))
 
 # nl2br 필터 추가
 @app.template_filter('nl2br')
